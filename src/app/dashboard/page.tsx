@@ -39,6 +39,11 @@ export default function Page() {
                       onAddDevice={(device) =>
                         setData((current) => [device, ...current])
                       }
+                      onDeleteDevice={(id) =>
+                        setData((current) =>
+                          current.filter((device) => device.id !== id),
+                        )
+                      }
                     />
                   </Suspense>
                 </div>

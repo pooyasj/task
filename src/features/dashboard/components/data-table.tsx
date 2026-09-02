@@ -31,6 +31,7 @@ import {
 } from "@/src/shared/components/ui/select";
 import type { Device, DeviceStatus } from "../types/device";
 import { AddDeviceModal } from "./AddDeviceModal";
+import { DeleteDeviceDialog } from "./DeleteDeviceDialog";
 
 type StatusFilter =
   | "all"
@@ -46,12 +47,14 @@ interface DataTableProps<TData extends RowData> {
   columns: ColumnDef<typeof features, TData>[];
   data: TData[];
   onAddDevice: (device: Device) => void;
+  onDeleteDevice: (id: string) => void;
 }
 
 export function DataTable<TData extends RowData>({
   columns,
   data,
   onAddDevice,
+  onDeleteDevice,
 }: DataTableProps<TData>) {
   const pathname = usePathname();
   const router = useRouter();
@@ -160,6 +163,7 @@ export function DataTable<TData extends RowData>({
                     )}
                   </TableHead>
                 ))}
+                <TableHead className="w-16 text-right">Actions</TableHead>
               </TableRow>
             ))}
           </TableHeader>
@@ -176,12 +180,18 @@ export function DataTable<TData extends RowData>({
                       <table.FlexRender cell={cell} />
                     </TableCell>
                   ))}
+                  <TableCell className="text-right">
+                    <DeleteDeviceDialog
+                      device={row.original as TData & Device}
+                      onDelete={onDeleteDevice}
+                    />
+                  </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={columns.length + 1}
                   className="h-40 text-center"
                 >
                   <div className="flex flex-col items-center gap-1">
