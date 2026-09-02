@@ -5,10 +5,10 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@/src/shared/components/ui/sidebar";
-import type { Device } from "@/src/features/devices/types/device";
-import rawData from "@/src/features/devices/data/devices.json";
-import { columns } from "@/src/features/devices/components/columns";
-import { DataTable } from "@/src/features/devices/components/data-table";
+import type { Device } from "@/src/features/dashboard/types/device";
+import rawData from "@/src/features/dashboard/data/devices.json";
+import { columns } from "@/src/features/dashboard/components/columns";
+import { DataTable } from "@/src/features/dashboard/components/data-table";
 export default function Page() {
   const data = rawData as Device[];
 
