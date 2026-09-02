@@ -1,3 +1,6 @@
+"use client";
+
+import * as React from "react";
 import { Suspense } from "react";
 import { AppSidebar } from "@/src/shared/components/app-sidebar";
 import { SiteHeader } from "@/src/shared/components/site-header";
@@ -10,7 +13,7 @@ import rawData from "@/src/features/dashboard/data/devices.json";
 import { columns } from "@/src/features/dashboard/components/columns";
 import { DataTable } from "@/src/features/dashboard/components/data-table";
 export default function Page() {
-  const data = rawData as Device[];
+  const [data, setData] = React.useState<Device[]>(rawData as Device[]);
 
   return (
     <SidebarProvider
@@ -30,7 +33,13 @@ export default function Page() {
               <div className="px-4 lg:px-6">
                 <div className="container mx-auto py-10">
                   <Suspense fallback={null}>
-                    <DataTable columns={columns} data={data} />
+                    <DataTable
+                      columns={columns}
+                      data={data}
+                      onAddDevice={(device) =>
+                        setData((current) => [device, ...current])
+                      }
+                    />
                   </Suspense>
                 </div>
               </div>

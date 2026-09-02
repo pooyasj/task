@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from "@/src/shared/components/ui/select";
 import type { Device, DeviceStatus } from "../types/device";
+import { AddDeviceModal } from "./AddDeviceModal";
 
 type StatusFilter =
   | "all"
@@ -44,11 +45,13 @@ const getStatusFilter = (value: string | null): StatusFilter => {
 interface DataTableProps<TData extends RowData> {
   columns: ColumnDef<typeof features, TData>[];
   data: TData[];
+  onAddDevice: (device: Device) => void;
 }
 
 export function DataTable<TData extends RowData>({
   columns,
   data,
+  onAddDevice,
 }: DataTableProps<TData>) {
   const pathname = usePathname();
   const router = useRouter();
@@ -117,29 +120,32 @@ export function DataTable<TData extends RowData>({
 
   return (
     <div>
-      <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
         <Input
           placeholder="Search by name or IP..."
           value={searchInput}
           onChange={(event) => setSearchInput(event.target.value)}
           className="max-w-sm"
         />
-        <Select
-          value={statusFilter}
-          onValueChange={(value) =>
-            setStatusFilter(getStatusFilter(value as string | null))
-          }
-        >
-          <SelectTrigger aria-label="Filter by status" className="sm:w-36">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="Online">Online</SelectItem>
-            <SelectItem value="Offline">Offline</SelectItem>
-            <SelectItem value="Warning">Warning</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <Select
+            value={statusFilter}
+            onValueChange={(value) =>
+              setStatusFilter(getStatusFilter(value as string | null))
+            }
+          >
+            <SelectTrigger aria-label="Filter by status" className="sm:w-36">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="Online">Online</SelectItem>
+              <SelectItem value="Offline">Offline</SelectItem>
+              <SelectItem value="Warning">Warning</SelectItem>
+            </SelectContent>
+          </Select>
+          <AddDeviceModal onAdd={onAddDevice} />
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-md border">
