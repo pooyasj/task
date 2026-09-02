@@ -1,11 +1,15 @@
 "use client";
-import * as React from "react"
+
+import * as React from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   useTable,
   type ColumnDef,
+  type ColumnFiltersState,
   type RowData,
   type SortingState,
 } from "@tanstack/react-table";
+
 import {
   Table,
   TableBody,
@@ -15,10 +19,25 @@ import {
   TableRow,
 } from "@/src/shared/components/ui/table";
 
-import { features, type DataTableFeatures } from "./data-table-features";
+import { features } from "./data-table-features";
+import { Input } from "@/src/shared/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/src/shared/components/ui/select";
+import type { Device, DeviceStatus } from "../types/device";
+
+type StatusFilter = "all" | Extract<DeviceStatus, "Online" | "Offline">;
+
+const getStatusFilter = (value: string | null): StatusFilter => {
+  return value === "Online" || value === "Offline" ? value : "all";
+};
 
 interface DataTableProps<TData extends RowData> {
-  columns: ColumnDef<DataTableFeatures, TData>[];
+  columns: ColumnDef<typeof features, TData>[];
   data: TData[];
 }
 
@@ -26,54 +45,145 @@ export function DataTable<TData extends RowData>({
   columns,
   data,
 }: DataTableProps<TData>) {
-   const [sorting, setSorting] = React.useState<SortingState>([])
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [searchInput, setSearchInput] = React.useState(
+    () => searchParams.get("search") ?? "",
+  );
+  const [statusFilter, setStatusFilter] = React.useState<StatusFilter>(() =>
+    getStatusFilter(searchParams.get("status")),
+  );
+  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    [],
+  );
+
+  React.useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      const normalizedSearch = searchInput.trim();
+
+      if (normalizedSearch) {
+        params.set("search", normalizedSearch);
+      } else {
+        params.delete("search");
+      }
+
+      if (statusFilter === "all") {
+        params.delete("status");
+      } else {
+        params.set("status", statusFilter);
+      }
+
+      const query = params.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname, {
+        scroll: false,
+      });
+    }, 300);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [pathname, router, searchInput, searchParams, statusFilter]);
+
+  const filteredData = data.filter((row) => {
+    const device = row as TData & Pick<Device, "name" | "ip" | "status">;
+    const normalizedSearch = searchInput.trim().toLowerCase();
+    const matchesSearch =
+      !normalizedSearch ||
+      device.name.toLowerCase().includes(normalizedSearch) ||
+      device.ip.toLowerCase().includes(normalizedSearch);
+    const matchesStatus =
+      statusFilter === "all" || device.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
+
   const table = useTable({
     features,
-    data,
+    data: filteredData,
     columns,
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    state: {
+      sorting,
+      columnFilters,
+    },
   });
 
   return (
-    <div className="overflow-hidden rounded-md border">
-      <Table>
-        <TableHeader>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map((header) => {
-                return (
+    <div>
+      <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center">
+        <Input
+          placeholder="Search by name or IP..."
+          value={searchInput}
+          onChange={(event) => setSearchInput(event.target.value)}
+          className="max-w-sm"
+        />
+        <Select
+          value={statusFilter}
+          onValueChange={(value) =>
+            setStatusFilter(getStatusFilter(value as string | null))
+          }
+        >
+          <SelectTrigger aria-label="Filter by status" className="sm:w-36">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All statuses</SelectItem>
+            <SelectItem value="Online">Online</SelectItem>
+            <SelectItem value="Offline">Offline</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="overflow-hidden rounded-md border">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
                   <TableHead key={header.id}>
                     {header.isPlaceholder ? null : (
                       <table.FlexRender header={header} />
                     )}
                   </TableHead>
-                );
-              })}
-            </TableRow>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {table.getRowModel().rows?.length ? (
-            table.getRowModel().rows.map((row) => (
-              <TableRow
-                key={row.id}
-                data-state={row.getIsSelected() && "selected"}
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    <table.FlexRender cell={cell} />
-                  </TableCell>
                 ))}
               </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
-                No results.
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+            ))}
+          </TableHeader>
+
+          <TableBody>
+            {table.getRowModel().rows.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      <table.FlexRender cell={cell} />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-40 text-center"
+                >
+                  <div className="flex flex-col items-center gap-1">
+                    <p className="font-medium">No devices found</p>
+                    <p className="text-muted-foreground text-sm">
+                      Try changing your search or status filter.
+                    </p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }

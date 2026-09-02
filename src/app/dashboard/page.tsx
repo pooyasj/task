@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { AppSidebar } from "@/src/shared/components/app-sidebar";
 import { SiteHeader } from "@/src/shared/components/site-header";
 import {
@@ -28,7 +29,9 @@ export default function Page() {
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6 pt-0!">
               <div className="px-4 lg:px-6">
                 <div className="container mx-auto py-10">
-                  <DataTable columns={columns} data={data} />
+                  <Suspense fallback={null}>
+                    <DataTable columns={columns} data={data} />
+                  </Suspense>
                 </div>
               </div>
             </div>
