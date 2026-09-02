@@ -123,21 +123,24 @@ export function DataTable<TData extends RowData>({
 
   return (
     <div>
-      <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 py-4 sm:flex sm:items-center sm:justify-between">
         <Input
           placeholder="Search by name or IP..."
           value={searchInput}
           onChange={(event) => setSearchInput(event.target.value)}
-          className="max-w-sm"
+          className="min-w-0 max-w-sm sm:flex-1"
         />
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="contents sm:flex sm:items-center sm:gap-3">
           <Select
             value={statusFilter}
             onValueChange={(value) =>
               setStatusFilter(getStatusFilter(value as string | null))
             }
           >
-            <SelectTrigger aria-label="Filter by status" className="sm:w-36">
+            <SelectTrigger
+              aria-label="Filter by status"
+              className="w-full sm:w-36"
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
