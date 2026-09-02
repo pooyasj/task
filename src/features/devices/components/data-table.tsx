@@ -1,7 +1,11 @@
-"use client"
-
-import { useTable, type ColumnDef, type RowData } from "@tanstack/react-table"
-
+"use client";
+import * as React from "react"
+import {
+  useTable,
+  type ColumnDef,
+  type RowData,
+  type SortingState,
+} from "@tanstack/react-table";
 import {
   Table,
   TableBody,
@@ -9,24 +13,25 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/src/shared/components/ui/table"
+} from "@/src/shared/components/ui/table";
 
-import { features, type DataTableFeatures } from "./data-table-features"
+import { features, type DataTableFeatures } from "./data-table-features";
 
 interface DataTableProps<TData extends RowData> {
-  columns: ColumnDef<DataTableFeatures, TData>[]
-  data: TData[]
+  columns: ColumnDef<DataTableFeatures, TData>[];
+  data: TData[];
 }
 
 export function DataTable<TData extends RowData>({
   columns,
   data,
 }: DataTableProps<TData>) {
+   const [sorting, setSorting] = React.useState<SortingState>([])
   const table = useTable({
     features,
     data,
     columns,
-  })
+  });
 
   return (
     <div className="overflow-hidden rounded-md border">
@@ -41,7 +46,7 @@ export function DataTable<TData extends RowData>({
                       <table.FlexRender header={header} />
                     )}
                   </TableHead>
-                )
+                );
               })}
             </TableRow>
           ))}
@@ -70,5 +75,5 @@ export function DataTable<TData extends RowData>({
         </TableBody>
       </Table>
     </div>
-  )
+  );
 }
