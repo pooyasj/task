@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useDebounce } from "@/src/features/devices/hooks/use-debounce";
 import {
   useTable,
   type ColumnDef,
@@ -55,9 +56,7 @@ export function DataTable<TData extends RowData>({
   const [searchInput, setSearchInput] = React.useState(
     () => searchParams.get("search") ?? "",
   );
-  const [debouncedSearch, setDebouncedSearch] = React.useState(
-    () => searchParams.get("search") ?? "",
-  );
+  const debouncedSearch = useDebounce(searchInput, 300);
   const [statusFilter, setStatusFilter] = React.useState<StatusFilter>(() =>
     getStatusFilter(searchParams.get("status")),
   );
@@ -65,14 +64,6 @@ export function DataTable<TData extends RowData>({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
   );
-
-  React.useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      setDebouncedSearch(searchInput.trim());
-    }, 300);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [searchInput]);
 
   React.useEffect(() => {
     const params = new URLSearchParams(searchParams.toString());
