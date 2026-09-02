@@ -30,10 +30,14 @@ import {
 } from "@/src/shared/components/ui/select";
 import type { Device, DeviceStatus } from "../types/device";
 
-type StatusFilter = "all" | Extract<DeviceStatus, "Online" | "Offline">;
+type StatusFilter =
+  | "all"
+  | Extract<DeviceStatus, "Online" | "Offline" | "Warning">;
 
 const getStatusFilter = (value: string | null): StatusFilter => {
-  return value === "Online" || value === "Offline" ? value : "all";
+  return value === "Online" || value === "Offline" || value === "Warning"
+    ? value
+    : "all";
 };
 
 interface DataTableProps<TData extends RowData> {
@@ -51,6 +55,9 @@ export function DataTable<TData extends RowData>({
   const [searchInput, setSearchInput] = React.useState(
     () => searchParams.get("search") ?? "",
   );
+  const [debouncedSearch, setDebouncedSearch] = React.useState(
+    () => searchParams.get("search") ?? "",
+  );
   const [statusFilter, setStatusFilter] = React.useState<StatusFilter>(() =>
     getStatusFilter(searchParams.get("status")),
   );
@@ -61,33 +68,40 @@ export function DataTable<TData extends RowData>({
 
   React.useEffect(() => {
     const timeoutId = window.setTimeout(() => {
-      const params = new URLSearchParams(searchParams.toString());
-      const normalizedSearch = searchInput.trim();
-
-      if (normalizedSearch) {
-        params.set("search", normalizedSearch);
-      } else {
-        params.delete("search");
-      }
-
-      if (statusFilter === "all") {
-        params.delete("status");
-      } else {
-        params.set("status", statusFilter);
-      }
-
-      const query = params.toString();
-      router.replace(query ? `${pathname}?${query}` : pathname, {
-        scroll: false,
-      });
+      setDebouncedSearch(searchInput.trim());
     }, 300);
 
     return () => window.clearTimeout(timeoutId);
-  }, [pathname, router, searchInput, searchParams, statusFilter]);
+  }, [searchInput]);
+
+  React.useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    const normalizedSearch = debouncedSearch;
+
+    if (normalizedSearch) {
+      params.set("search", normalizedSearch);
+    } else {
+      params.delete("search");
+    }
+
+    if (statusFilter === "all") {
+      params.delete("status");
+    } else {
+      params.set("status", statusFilter);
+    }
+
+    const query = params.toString();
+    const nextUrl = query ? `${pathname}?${query}` : pathname;
+    const currentUrl = `${window.location.pathname}${window.location.search}`;
+
+    if (currentUrl !== nextUrl) {
+      router.replace(nextUrl, { scroll: false });
+    }
+  }, [debouncedSearch, pathname, router, searchParams, statusFilter]);
 
   const filteredData = data.filter((row) => {
     const device = row as TData & Pick<Device, "name" | "ip" | "status">;
-    const normalizedSearch = searchInput.trim().toLowerCase();
+    const normalizedSearch = debouncedSearch.toLowerCase();
     const matchesSearch =
       !normalizedSearch ||
       device.name.toLowerCase().includes(normalizedSearch) ||
@@ -132,6 +146,7 @@ export function DataTable<TData extends RowData>({
             <SelectItem value="all">All statuses</SelectItem>
             <SelectItem value="Online">Online</SelectItem>
             <SelectItem value="Offline">Offline</SelectItem>
+            <SelectItem value="Warning">Warning</SelectItem>
           </SelectContent>
         </Select>
       </div>
