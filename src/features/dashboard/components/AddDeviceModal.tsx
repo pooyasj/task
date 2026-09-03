@@ -26,7 +26,11 @@ export function AddDeviceModal({ onAdd }: AddDeviceModalProps) {
 
   return (
     <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
-      <DialogPrimitive.Trigger render={<Button>Add device</Button>} />
+      <DialogPrimitive.Trigger
+        render={
+          <Button className="col-span-2 w-full sm:w-auto">Add device</Button>
+        }
+      />
       <DialogPrimitive.Portal>
         <DialogPrimitive.Backdrop className="fixed inset-0 z-50 bg-black/50" />
         <DialogPrimitive.Viewport className="fixed inset-0 z-50 flex items-center justify-center p-4">
